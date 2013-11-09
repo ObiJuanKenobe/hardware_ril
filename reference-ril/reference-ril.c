@@ -1529,7 +1529,7 @@ static void requestSendSMS(void *data, size_t datalen, RIL_Token t)
     ATResponse *p_response = NULL;
 
     memset(&response, 0, sizeof(response));
-    ALOGD("requestSendSMS datalen =%d", datalen);
+    RLOGD("requestSendSMS datalen =%d", datalen);
 
     if (s_ims_gsm_fail != 0) goto error;
     if (s_ims_gsm_retry != 0) goto error2;
@@ -1568,8 +1568,8 @@ error2:
     RIL_onRequestComplete(t, RIL_E_SMS_SEND_FAIL_RETRY, &response, sizeof(response));
     at_response_free(p_response);
     return;
+    }
 }
-
 static void requestImsSendSMS(void *data, size_t datalen, RIL_Token t)
 {
     RIL_IMS_SMS_Message *p_args;
@@ -1577,7 +1577,7 @@ static void requestImsSendSMS(void *data, size_t datalen, RIL_Token t)
 
     memset(&response, 0, sizeof(response));
 
-    ALOGD("requestImsSendSMS: datalen=%d, "
+    RLOGD("requestImsSendSMS: datalen=%d, "
         "registered=%d, service=%d, format=%d, ims_perm_fail=%d, "
         "ims_retry=%d, gsm_fail=%d, gsm_retry=%d",
         datalen, s_ims_registered, s_ims_services, s_ims_format,
@@ -1602,7 +1602,7 @@ static void requestImsSendSMS(void *data, size_t datalen, RIL_Token t)
                 datalen - sizeof(RIL_RadioTechnologyFamily),
                 t);
     } else {
-        ALOGE("requestImsSendSMS invalid format value =%d", p_args->tech);
+        RLOGE("requestImsSendSMS invalid format value =%d", p_args->tech);
     }
 
 error:
@@ -2239,8 +2239,7 @@ onRequest (int request, void *data, size_t datalen, RIL_Token t)
             requestEnterSimPin(data, datalen, t);
             break;
 
-       case RIL_REQUEST_IMS_REGISTRATION_STATE:
-        {
+        case RIL_REQUEST_IMS_REGISTRATION_STATE: {
             int reply[2];
             //0==unregistered, 1==registered
             reply[0] = s_ims_registered;
@@ -2251,7 +2250,7 @@ onRequest (int request, void *data, size_t datalen, RIL_Token t)
             // FORMAT_3GPP(1) vs FORMAT_3GPP2(2);
             reply[1] = s_ims_format;
 
-            ALOGD("IMS_REGISTRATION=%d, format=%d ",
+            RLOGD("IMS_REGISTRATION=%d, format=%d ",
                     reply[0], reply[1]);
             if (reply[1] != -1) {
                 RIL_onRequestComplete(t, RIL_E_SUCCESS, reply, sizeof(reply));
@@ -2276,6 +2275,14 @@ onRequest (int request, void *data, size_t datalen, RIL_Token t)
 
         case RIL_REQUEST_GET_PREFERRED_NETWORK_TYPE:
             requestGetPreferredNetworkType(request, data, datalen, t);
+            break;
+
+        case RIL_REQUEST_GET_CELL_INFO_LIST:
+            requestGetCellInfoList(data, datalen, t);
+            break;
+
+        case RIL_REQUEST_SET_UNSOL_CELL_INFO_LIST_RATE:
+            requestSetCellInfoListRate(data, datalen, t);
             break;
 
         /* CDMA Specific Requests */
@@ -2326,14 +2333,6 @@ onRequest (int request, void *data, size_t datalen, RIL_Token t)
                 requestExitEmergencyMode(data, datalen, t);
                 break;
             } // Fall-through if tech is not cdma
-
-        case RIL_REQUEST_GET_CELL_INFO_LIST:
-            requestGetCellInfoList(data, datalen, t);
-            break;
-
-        case RIL_REQUEST_SET_UNSOL_CELL_INFO_LIST_RATE:
-            requestSetCellInfoListRate(data, datalen, t);
-            break;
 
         default:
             RLOGD("Request not supported. Tech: %d",TECH(sMdmInfo));
@@ -3022,7 +3021,7 @@ static void waitForClose()
 
 static void sendUnsolImsNetworkStateChanged()
 {
-#if 0  // to be used when unsol is changed to return data.
+#if 0 // to be used when unsol is changed to return data.
     int reply[2];
     reply[0] = s_ims_registered;
     reply[1] = s_ims_services;
